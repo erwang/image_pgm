@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+	 <script src="traitement_image_eleve_fichiers/jquery.js"></script>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>PGM</title>
+  </head>
+  <body>
+<div style="float:left;padding-right:10;" height="50%">
+
+		<div id="message"></div>
+  
+		<textarea cols="80" rows="25" id="pgmp2">P2
+# Shows the word "ISN"
+18 7
+15
+0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+0  3  3  3  3  0  0  7  7  7  7  0  0 11  0  0 11  0
+0  0  3  3  0  0  0  7  0  0  0  0  0 11 11  0 11  0
+0  0  3  3  0  0  0  7  7  7  7  0  0 11  0 11 11  0
+0  0  3  3  0  0  0  0  0  0  7  0  0 11  0  0 11  0
+0  3  3  3  3  0  0  7  7  7  7  0  0 11  0  0 11  0
+0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+</textarea>
+</div>
+<div height="50%">
+	<input id="miroirVertical" name="fonction" value="miroirVertical" type="radio">
+		<label for="miroirVertical">Miroir vertical</label><br>
+	<input id="miroirHorizontal" name="fonction" value="miroirHorizontal" type="radio">
+		<label for="miroirHorizontal">Miroir horizontal</label><br>
+	<input checked="checked" id="symetrieVerticale" name="fonction" value="symetrieVerticale" type="radio">
+		<label for="symetrieVerticale">Symétrie axiale verticale</label><br>
+	<input id="symetrieHorizontale" name="fonction" value="symetrieHorizontale" type="radio">
+		<label for="symetrieHorizontale">Symétrie axiale horizontale</label><br>
+	<input id="rotation90" name="fonction" value="rotation90" type="radio">
+		<label for="rotation90">Rotation 90°</label><br>
+	<input onclick="afficherImage()" value="Afficher l'image" type="button"><br>
+</div>
+<div style="float:left; padding-right:10;" height="50%">
+		Image d'origine :<br>
+		<canvas id="origine" width="500" height="500" style="border:thin solid">
+		<p>Votre navigateur ne supporte pas l'élément Canvas !</p>
+		</canvas>	
+</div>
+<div>
+		Image modifiée:<br>
+		<canvas id="modifiee" width="500" height="500" style="border:thin solid">
+		<p>Votre navigateur ne supporte pas l'élément Canvas !</p>
+		</canvas>	
+</div>
+		<script>
+			function miroirVertical(matrice){
+				//affectation d'un tableau à une dimension
+				var matriceModifiee=new Array();
+				//parcours de toutes les lignes de la matrice origine
+				var nbLignes=matrice.length;
+				var nbColonnes=matrice[0].length;
+				for(var i=0;i<nbLignes;i++){
+					//chaque case du tableau à une dimension est un tableau
+					matriceModifiee[i]=new Array();
+					//parcours de toutes les colonnes de la i-ème ligne
+					for(j=0;j<nbColonnes;j++){
+						//affectation de la case située à la ligne i et la colonne j
+						matriceModifiee[i][j]=matrice[i][nbColonnes-j-1];
+					}					
+				}
+				//on retourne la matrice pour l'afficher
+				return matriceModifiee;
+			}
+			function miroirHorizontal(matrice){
+			}
+			function symetrieHorizontale(matrice){
+			}
+			function symetrieVerticale(matrice){
+			}
+			function rotation90(matrice){
+			}
+			function parse_pgm_p2(code){
+				var image=new Array();
+				var lignes=code.split("\n");
+				var lignesUtiles=new Array();
+				for(var i=0;i<lignes.length;i++){
+					if(lignes[i].substr(0,1)!="#" && lignes[i].trim()!=""){
+						lignesUtiles.push(lignes[i]);
+					}
+				}
+				if(lignesUtiles[0]!="P2"){
+					return 0;
+				}
+				var dimensions=lignesUtiles[1].split(" ");
+				
+				if(dimensions.length==2){
+					image["largeur"]=parseInt(dimensions[0]);
+					image["hauteur"]=parseInt(dimensions[1]);
+				}else{
+					return 1;
+				}
+				image["valMaxGris"]=parseInt(lignes[2]);
+				image["code"]=new Array();
+				for(var i=3;i<lignesUtiles.length;i++){
+					
+					if(lignesUtiles[i].substr(0,1)!="#"){
+						image["code"].push(lignesUtiles[i].trim().replace(/  /g," ").split(" "));
+					}
+				}
+				
+				return image;
+			}
+			function afficher(matrice,hauteur,largeur,maxValGris,contenant){
+				//effacer l'image
+				contenant.clearRect(0,0,contenant.width,contenant.height);
+				//traiter l'image
+				if(matrice.length!=hauteur){
+					$("#message").append("Erreur : le nombre de lignes de la matrice d'image est incorrect<br />");
+				}
+				//traitement des lignes
+				for(var i=0;i<matrice.length;i++){
+					//affectation de la ligne
+					var ligne=matrice[i];
+					//recherche des anomalies
+					if(ligne.length!=largeur){
+						$("#message").append("Erreur sur la ligne " + i +" de la matrice d'image<br />");
+					}
+					//traitement des colonnes de la ligne
+					for(var j=0;j<ligne.length;j++){
+						//determination de la couleur
+						var couleur=parseInt(ligne[j]);
+						var couleur=Math.round(couleur*255/maxValGris,0);
+						//affectation de la nouvelle nuance de gris
+						contenant.fillStyle = "rgb("+couleur+","+couleur+","+couleur+")";
+						//rempliisage du pixel
+						contenant.fillRect(j*pixelLargeur,i*pixelHauteur,pixelLargeur,pixelHauteur);
+					}
+				}			
+			}
+			function afficherImage(){
+				//effacer les messages d'erreur
+				$("#message").html("");
+				
+				//recuperer le texte ASCII
+				var code=$('#pgmp2').val();					
+				//parser le texte ASCII
+				var image=parse_pgm_p2(code);
+				afficher(image['code'],image['hauteur'],image['largeur'],image["valMaxGris"],origine);
+				
+				var fonction=$('input[type=radio][name=fonction]:checked').attr('value');
+				var nouvelleMatrice=window[fonction](image['code']);
+				afficher(nouvelleMatrice,nouvelleMatrice.length,nouvelleMatrice[0].length,image["valMaxGris"],modifiee);
+			}
+			var $canvas;
+			var origine;
+			var modifiee;
+			var pixelHauteur=20;
+			var pixelLargeur=20;
+			$(document).ready(function(){
+				origine = $('#origine').get(0).getContext("2d"); 
+				modifiee=$('#modifiee').get(0).getContext("2d");
+				$('#pgmp2').change(function(){
+					afficherImage();
+				});
+			});
+		</script>     
+  
+  
+</body></html>
